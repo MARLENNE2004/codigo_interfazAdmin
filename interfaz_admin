@@ -1,0 +1,503 @@
+import 'package:flutter/material.dart';
+
+void main() => runApp(MaterialApp(
+      title: 'GLENSCAN · Panel de administración',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        useMaterial3: true,
+        scaffoldBackgroundColor: C.white,
+        colorScheme: ColorScheme.fromSeed(seedColor: C.wine, primary: C.wine, surface: C.white),
+        fontFamily: 'Roboto',
+      ),
+      home: const Shell(),
+    ));
+
+/// COLORES GLENSCAN
+class C {
+  static const white = Color(0xFFFFFFFF), charcoal = Color(0xFF383838), wine = Color(0xFF96092B), gray = Color(0xFF808080),
+      darkRed = Color(0xFF8F0306), silver = Color(0xFFBEC3C6), red = Color(0xFFCC0019), platinum = Color(0xFFE5E4E2),
+      brightRed = Color(0xFFE50C0C), success = Color(0xFF2E7D32); 
+  static const brand = LinearGradient(colors: [wine, red], begin: Alignment.topLeft, end: Alignment.bottomRight);
+}
+
+/// ESTILOS
+const _b = FontWeight.w700, _x = FontWeight.w800;
+TextStyle _s(double z, [FontWeight w = FontWeight.w500, Color c = C.charcoal]) => TextStyle(fontSize: z, fontWeight: w, color: c);
+List<BoxShadow> _sh(Color c, double a, double blur, double dy) => [BoxShadow(color: c.withValues(alpha: a), blurRadius: blur, offset: Offset(0, dy))];
+BoxDecoration _d(Color? c, {Gradient? g, double r = 12, bool line = false, List<BoxShadow>? sh}) => BoxDecoration(
+    color: c, gradient: g, borderRadius: BorderRadius.circular(r), border: line ? Border.all(color: C.platinum) : null, boxShadow: sh);
+OutlineInputBorder _ob([Color? c]) =>
+    OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: c == null ? BorderSide.none : BorderSide(color: c, width: 1.4));
+Widget _chip(IconData i, double z) => Container(
+    width: z, height: z, decoration: _d(C.wine.withValues(alpha: .08), r: 11), child: Icon(i, size: z * .52, color: C.wine));
+Widget _circle(String t, double z, {Color? color, Gradient? g}) => Container(
+    width: z, height: z, alignment: Alignment.center, decoration: BoxDecoration(color: color, gradient: g, shape: BoxShape.circle),
+    child: Text(t, style: _s(z * .4, _x, C.white)));
+Widget _card(Widget c) => Container(
+    width: double.infinity, padding: const EdgeInsets.all(20), decoration: _d(C.white, r: 20, line: true, sh: _sh(C.charcoal, .05, 22, 10)), child: c);
+Widget _head(String t, String v, String d, String cap) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text(t, style: _s(15, _b)),
+      const SizedBox(height: 10),
+      Row(crossAxisAlignment: CrossAxisAlignment.end, mainAxisSize: MainAxisSize.min, children: [
+        Text(v, style: _s(30, _x).copyWith(height: 1)),
+        const SizedBox(width: 8),
+        Text(d, style: _s(13, _b, C.success)),
+      ]),
+      const SizedBox(height: 6),
+      Text(cap, style: _s(12.5, FontWeight.w400, C.gray)),
+    ]);
+Widget _gbtn(IconData i, String l) => Material(
+    color: Colors.transparent,
+    child: Ink(
+      decoration: _d(null, g: C.brand, sh: _sh(C.wine, .28, 14, 6)),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () {},
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [Icon(i, size: 18, color: C.white), const SizedBox(width: 8), Text(l, style: _s(13.5, _b, C.white))]),
+        ),
+      ),
+    ));
+
+const _nav = [
+  (Icons.dashboard_rounded, 'Dashboard'),
+  (Icons.people_alt_rounded, 'Miembros'),
+  (Icons.event_available_rounded, 'Clases'),
+  (Icons.fitness_center_rounded, 'Workouts'),
+  (Icons.calendar_month_rounded, 'Citas'),
+  (Icons.settings_rounded, 'Configuración'),
+];
+
+/// BARRA LATERAL
+class Shell extends StatefulWidget {
+  const Shell({super.key});
+  @override
+  State<Shell> createState() => _ShellState();
+}
+
+class _ShellState extends State<Shell> {
+  final _key = GlobalKey<ScaffoldState>();
+  bool _col = false;
+  int _sel = 0;
+
+  Widget _side(bool col, bool drawer) => Container(
+        decoration: const BoxDecoration(border: Border(right: BorderSide(color: C.platinum))),
+        child: ClipRect(
+          child: LayoutBuilder(builder: (_, c) {
+            final full = c.maxWidth > 180;
+            void pick(int i) {
+              setState(() => _sel = i);
+              if (drawer) Navigator.pop(context);
+            }
+
+            return Column(children: [
+              SizedBox(
+                height: 72,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 18),
+                  child: Row(mainAxisAlignment: full ? MainAxisAlignment.start : MainAxisAlignment.center, children: [
+                    Container(
+                      width: 42, height: 42,
+                      decoration: _d(null, g: C.brand, r: 13, sh: _sh(C.wine, .3, 14, 6)),
+                      child: const Icon(Icons.fitness_center_rounded, color: C.white, size: 22),
+                    ),
+                    if (full) ...[
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          Text('GLENSCAN', maxLines: 1, overflow: TextOverflow.clip, style: _s(18, _x).copyWith(letterSpacing: 1.2)),
+                          Text('Gestión del gimnasio', maxLines: 1, overflow: TextOverflow.clip, style: _s(12, FontWeight.w400, C.gray)),
+                        ]),
+                      ),
+                    ],
+                  ]),
+                ),
+              ),
+              const Divider(height: 1, color: C.platinum),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(14, 14, 14, 0),
+                  child: Column(children: [for (var i = 0; i < _nav.length; i++) _tile(_nav[i].$1, _nav[i].$2, full, () => pick(i), sel: i == _sel)]),
+                ),
+              ),
+              const Divider(height: 1, color: C.platinum),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
+                child: Column(children: [
+                  if (!drawer)
+                    _tile(col ? Icons.keyboard_double_arrow_right_rounded : Icons.keyboard_double_arrow_left_rounded, 'Contraer menú', full,
+                        () => setState(() => _col = !_col)),
+                  _tile(Icons.logout_rounded, 'Cerrar sesión', full, () {}, color: C.red),
+                ]),
+              ),
+            ]);
+          }),
+        ),
+      );
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(builder: (_, c) {
+        final mobile = c.maxWidth < 900;
+        return Scaffold(
+          key: _key,
+          drawer: mobile ? Drawer(width: 272, shape: const RoundedRectangleBorder(), child: _side(false, true)) : null,
+          body: SafeArea(
+            child: Row(children: [
+              if (!mobile)
+                // Desliza a la izquierda para contraer y a la derecha para expandir
+                GestureDetector(
+                  onHorizontalDragEnd: (d) {
+                    final v = d.primaryVelocity ?? 0;
+                    if (v.abs() > 150) setState(() => _col = v < 0);
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 280),
+                    curve: Curves.easeInOutCubic,
+                    width: _col ? 84 : 268,
+                    child: _side(_col, false),
+                  ),
+                ),
+              Expanded(
+                child: Column(children: [
+                  _top(c.maxWidth >= 720, () => mobile ? _key.currentState?.openDrawer() : setState(() => _col = !_col)),
+                  Expanded(child: _sel == 0 ? _dash() : _soon(_nav[_sel])),
+                ]),
+              ),
+            ]),
+          ),
+        );
+      });
+}
+
+Widget _tile(IconData i, String l, bool full, VoidCallback t, {bool sel = false, Color? color}) {
+  final fg = sel ? C.white : color ?? C.charcoal;
+  final w = Padding(
+    padding: const EdgeInsets.only(bottom: 6),
+    child: Material(
+      color: Colors.transparent,
+      child: Ink(
+        decoration: _d(null, g: sel ? C.brand : null, sh: sel ? _sh(C.wine, .25, 12, 5) : null),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          hoverColor: C.platinum.withValues(alpha: .7),
+          onTap: t,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            child: Row(mainAxisAlignment: full ? MainAxisAlignment.start : MainAxisAlignment.center, children: [
+              Icon(i, size: 22, color: fg),
+              if (full) ...[const SizedBox(width: 14), Expanded(child: Text(l, maxLines: 1, overflow: TextOverflow.clip, style: _s(14.5, sel ? _b : FontWeight.w500, fg)))],
+            ]),
+          ),
+        ),
+      ),
+    ),
+  );
+  return full ? w : Tooltip(message: l, child: w);
+}
+
+Widget _top(bool search, VoidCallback menu) => Container(
+      height: 72,
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: C.platinum))),
+      child: Row(children: [
+        IconButton(onPressed: menu, tooltip: 'Menú', icon: const Icon(Icons.menu_rounded, color: C.charcoal)),
+        const SizedBox(width: 8),
+        Expanded(child: Text('¡Bienvenido de nuevo, Admin!', maxLines: 1, overflow: TextOverflow.ellipsis, style: _s(18, _b))),
+        if (search) ...[
+          SizedBox(
+            width: 280,
+            height: 42,
+            child: TextField(
+              style: _s(14),
+              decoration: InputDecoration(
+                hintText: 'Buscar miembros, clases…',
+                hintStyle: _s(14, FontWeight.w400, C.gray),
+                prefixIcon: const Icon(Icons.search_rounded, color: C.gray, size: 20),
+                filled: true,
+                fillColor: C.platinum.withValues(alpha: .45),
+                contentPadding: EdgeInsets.zero,
+                border: _ob(),
+                focusedBorder: _ob(C.wine),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+        ],
+        Stack(clipBehavior: Clip.none, children: [
+          Container(
+            decoration: _d(null, line: true),
+            child: IconButton(onPressed: () {}, tooltip: 'Notificaciones', icon: const Icon(Icons.notifications_none_rounded, color: C.charcoal)),
+          ),
+          Positioned(
+            right: 8, top: 8,
+            child: Container(width: 10, height: 10, decoration: BoxDecoration(color: C.brightRed, shape: BoxShape.circle, border: Border.all(color: C.white, width: 2))),
+          ),
+        ]),
+        const SizedBox(width: 12),
+        _circle('A', 42, g: C.brand),
+      ]),
+    );
+
+Widget _soon((IconData, String) i) => Center(
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        Icon(i.$1, size: 56, color: C.silver),
+        const SizedBox(height: 12),
+        Text('${i.$2} · próximamente', style: _s(16, FontWeight.w600, C.gray)),
+      ]),
+    );
+
+/// DASHBOARD PRINCIPAL
+Widget _pair(bool wide, Widget a, Widget b, [int fa = 1, int fb = 1]) => wide
+    ? Row(crossAxisAlignment: CrossAxisAlignment.start, children: [Expanded(flex: fa, child: a), const SizedBox(width: 16), Expanded(flex: fb, child: b)])
+    : Column(children: [a, const SizedBox(height: 16), b]);
+
+const _stats = [
+  ('Miembros activos', '850', '+5.2% este mes', true, Icons.people_alt_rounded),
+  ('Asistencias de hoy', '76', '+10% vs. ayer', true, Icons.how_to_reg_rounded),
+  ('Sin asistir (7+ días)', '43', '+6 vs. semana pasada', false, Icons.person_off_rounded),
+  ('Ingresos de hoy', '\$1,240', '+8.1% vs. ayer', true, Icons.payments_rounded),
+];
+
+Widget _dash() => SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: LayoutBuilder(builder: (_, c) {
+        final w = c.maxWidth, wide = w >= 1000, cols = wide ? 4 : (w >= 560 ? 2 : 1), cw = (w - 16 * (cols - 1)) / cols;
+        const gap = SizedBox(height: 22);
+        return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Wrap(alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center, spacing: 12, runSpacing: 12, children: [
+            Text('Resumen del gimnasio', style: _s(26, _x)),
+            Row(mainAxisSize: MainAxisSize.min, children: [
+              OutlinedButton.icon(
+                onPressed: () {},
+                icon: const Icon(Icons.event_rounded, size: 18),
+                label: const Text('Agendar cita'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: C.charcoal,
+                  side: const BorderSide(color: C.platinum),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  textStyle: _s(13.5, FontWeight.w600),
+                ),
+              ),
+              const SizedBox(width: 10),
+              _gbtn(Icons.person_add_alt_1_rounded, 'Añadir miembro'),
+            ]),
+          ]),
+          gap,
+          Wrap(spacing: 16, runSpacing: 16, children: [for (final s in _stats) SizedBox(width: cw, child: _stat(s))]),
+          gap,
+          _pair(wide, const _Revenue(), _bars(), 2, 1),
+          gap,
+          _pair(
+            wide,
+            _list('Clases de hoy', icon: Icons.fitness_center_rounded, [
+              ('HIIT Matutino', '09:00 AM · Sara J.', '18/20', C.wine),
+              ('Yoga Vinyasa', '12:00 PM · Miguel R.', '20/20', C.red),
+              ('Spinning Power', '06:00 PM · Cloe T.', '15/25', C.wine),
+              ('Boxeo Fundamentos', '07:30 PM · David L.', '10/15', C.wine),
+            ]),
+            _list('Asistieron hoy', [
+              ('Juan Pérez', 'Rutina de pierna', 'Hace 2 min', C.charcoal),
+              ('Laura Gómez', 'Clase de Spinning', 'Hace 5 min', C.charcoal),
+              ('Bruno Salas', 'Rutina de espalda', 'Hace 8 min', C.charcoal),
+              ('Olivia Rodríguez', 'Cardio libre', 'Hace 12 min', C.charcoal),
+            ]),
+          ),
+          const SizedBox(height: 16),
+          _pair(
+            wide,
+            _list('Sin asistir en los últimos días', [
+              ('Pedro Ramírez', 'Último acceso: 31 oct', '9 días', C.red),
+              ('Marta Díaz', 'Último acceso: 02 nov', '7 días', C.red),
+              ('Iván Torres', 'Último acceso: 28 oct', '12 días', C.darkRed),
+              ('Sofía Herrera', 'Último acceso: 25 oct', '15 días', C.darkRed),
+            ]),
+            _list('Próximas citas', icon: Icons.calendar_month_rounded, [
+              ('Valoración inicial', '10:00 AM · Ana Torres', 'Hoy', C.wine),
+              ('Plan nutricional', '11:30 AM · Luis Pérez', 'Hoy', C.wine),
+              ('Medición corporal', '09:00 AM · Karen Ruiz', 'Mañana', C.gray),
+              ('Entrenamiento personal', '05:00 PM · Diego Mora', 'Mañana', C.gray),
+            ]),
+          ),
+        ]);
+      }),
+    );
+
+Widget _stat((String, String, String, bool, IconData) s) {
+  final (t, v, ch, up, ic) = s;
+  final col = up ? C.success : C.brightRed;
+  return _card(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+    Row(children: [Expanded(child: Text(t, maxLines: 1, overflow: TextOverflow.ellipsis, style: _s(13.5, FontWeight.w500, C.gray))), _chip(ic, 38)]),
+    const SizedBox(height: 10),
+    Text(v, style: _s(32, _x).copyWith(height: 1.1)),
+    const SizedBox(height: 8),
+    Row(children: [
+      Icon(up ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded, size: 14, color: col),
+      const SizedBox(width: 4),
+      Flexible(child: Text(ch, overflow: TextOverflow.ellipsis, style: _s(12.5, FontWeight.w600, col))),
+    ]),
+  ]));
+}
+
+/// INGRESOS GRAFICAS
+class _Revenue extends StatefulWidget {
+  const _Revenue();
+  @override
+  State<_Revenue> createState() => _RevenueState();
+}
+
+class _RevenueState extends State<_Revenue> {
+  bool _m = true;
+  static const _w = <double>[8, 11, 9, 14, 12, 18, 15];
+  static const _d30 = <double>[12, 17, 13, 9, 14, 18, 12, 8, 14, 15, 11, 6, 3, 8, 21, 14, 10, 17];
+
+  @override
+  Widget build(BuildContext context) => _card(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Wrap(alignment: WrapAlignment.spaceBetween, spacing: 12, runSpacing: 12, children: [
+          _m ? _head('Ingresos por membresías', '\$25,430', '+8.1%', 'Últimos 30 días') : _head('Ingresos por membresías', '\$6,215', '+4.1%', 'Últimos 7 días'),
+          Row(mainAxisSize: MainAxisSize.min, children: [
+            for (final m in [false, true])
+              Padding(
+                padding: const EdgeInsets.only(left: 8),
+                child: ChoiceChip(
+                  label: Text(m ? '30 días' : '7 días'),
+                  selected: _m == m,
+                  onSelected: (_) => setState(() => _m = m),
+                  showCheckmark: false,
+                  selectedColor: C.wine,
+                  backgroundColor: C.white,
+                  side: const BorderSide(color: C.platinum),
+                  labelStyle: _s(12.5, _b, _m == m ? C.white : C.charcoal),
+                ),
+              ),
+          ]),
+        ]),
+        const SizedBox(height: 18),
+        SizedBox(
+          height: 230,
+          width: double.infinity,
+          child: TweenAnimationBuilder<double>(
+            key: ValueKey(_m),
+            tween: Tween(begin: 0, end: 1),
+            duration: const Duration(milliseconds: 1000),
+            curve: Curves.easeOutCubic,
+            builder: (_, t, __) => CustomPaint(painter: _Line(_m ? _d30 : _w, t)),
+          ),
+        ),
+        const SizedBox(height: 10),
+        Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
+          for (final l in _m ? ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4'] : ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']) Text(l, style: _s(12, FontWeight.w600, C.gray)),
+        ]),
+      ]));
+}
+
+class _Line extends CustomPainter {
+  final List<double> data;
+  final double t;
+  _Line(this.data, this.t);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    for (var i = 0; i <= 4; i++) {
+      canvas.drawLine(Offset(0, size.height * i / 4), Offset(size.width, size.height * i / 4), Paint()..color = C.platinum);
+    }
+    final hi = data.reduce((a, b) => a > b ? a : b), lo = data.reduce((a, b) => a < b ? a : b), dx = size.width / (data.length - 1);
+    final p = [for (var i = 0; i < data.length; i++) Offset(dx * i, size.height * .9 - (data[i] - lo) / (hi - lo) * size.height * .78)];
+    final line = Path()..moveTo(p.first.dx, p.first.dy);
+    for (var i = 0; i < p.length - 1; i++) {
+      final mx = (p[i].dx + p[i + 1].dx) / 2;
+      line.cubicTo(mx, p[i].dy, mx, p[i + 1].dy, p[i + 1].dx, p[i + 1].dy);
+    }
+    final box = Offset.zero & size;
+    canvas.save();
+    canvas.clipRect(Rect.fromLTWH(0, 0, size.width * t, size.height)); // revelado progresivo
+    canvas.drawPath(
+      Path.from(line)..lineTo(size.width, size.height)..lineTo(0, size.height)..close(),
+      Paint()..shader = LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [C.wine.withValues(alpha: .28), C.wine.withValues(alpha: 0)]).createShader(box),
+    );
+    canvas.drawPath(
+      line,
+      Paint()..style = PaintingStyle.stroke..strokeWidth = 3.2..strokeCap = StrokeCap.round..shader = const LinearGradient(colors: [C.wine, C.red]).createShader(box),
+    );
+    canvas.restore();
+    if (t > .98) {
+      canvas.drawCircle(p.last, 6, Paint()..color = C.white);
+      canvas.drawCircle(p.last, 6, Paint()..style = PaintingStyle.stroke..strokeWidth = 3..color = C.red);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _Line o) => o.t != t || o.data != data;
+}
+
+Widget _bars() {
+  const v = <double>[62, 94, 88, 48, 86], l = ['Yoga', 'Spin', 'HIIT', 'Zumba', 'Box'];
+  return _card(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+    _head('Asistencia a clases', '450', '+7.8%', 'Esta semana'),
+    const SizedBox(height: 18),
+    SizedBox(
+      height: 262,
+      child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        for (var i = 0; i < v.length; i++)
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 5),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.bottomCenter,
+                    child: TweenAnimationBuilder<double>(
+                      tween: Tween(begin: 0, end: v[i] / 94),
+                      duration: Duration(milliseconds: 600 + i * 120),
+                      curve: Curves.easeOutCubic,
+                      builder: (_, t, __) => FractionallySizedBox(
+                        heightFactor: t.clamp(.02, 1.0),
+                        child: Container(decoration: _d(v[i] == 94 ? null : C.silver.withValues(alpha: .55), g: v[i] == 94 ? C.brand : null, r: 10)),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(l[i], textAlign: TextAlign.center, style: _s(12, FontWeight.w600, C.gray)),
+              ]),
+            ),
+          ),
+      ]),
+    ),
+  ]));
+}
+
+/// Lista generica: (título, subtítulo, etiqueta, color)
+Widget _list(String title, List<(String, String, String, Color)> rows, {IconData? icon}) => _card(Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Row(children: [
+        Expanded(child: Text(title, style: _s(15, _b))),
+        TextButton(onPressed: () {}, style: TextButton.styleFrom(foregroundColor: C.wine, textStyle: _s(13, _b)), child: const Text('Ver todo')),
+      ]),
+      ...List.generate(rows.length, (i) {
+        final r = rows[i];
+        return Column(children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 11),
+            child: Row(children: [
+              icon != null ? _chip(icon, 40) : _circle(r.$1[0], 40, color: [C.wine, C.charcoal, C.darkRed, C.gray][i % 4]),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(r.$1, overflow: TextOverflow.ellipsis, style: _s(14.5, _b)),
+                  const SizedBox(height: 3),
+                  Text(r.$2, overflow: TextOverflow.ellipsis, style: _s(12.5, FontWeight.w400, C.gray)),
+                ]),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: _d(r.$4.withValues(alpha: .1), r: 20),
+                child: Text(r.$3, style: _s(12, _b, r.$4)),
+              ),
+            ]),
+          ),
+          if (i != rows.length - 1) const Divider(height: 1, color: C.platinum),
+        ]);
+      }),
+    ]));
